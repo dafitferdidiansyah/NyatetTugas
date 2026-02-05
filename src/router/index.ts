@@ -1,6 +1,7 @@
+// src/router/index.ts
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import TabsPage from '../views/TabsPage.vue'
+import TabsPage from '../views/TabsPage.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -22,6 +23,11 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'tab2',
         component: () => import('@/views/Tab2Page.vue')
+      },
+      // TAMBAHKAN INI (Tab 3)
+      {
+        path: 'tab3',
+        component: () => import('@/views/Tab3Page.vue')
       }
     ]
   }

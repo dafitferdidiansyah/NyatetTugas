@@ -1,37 +1,60 @@
 <template>
   <ion-page>
     <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>Mata Kuliah</ion-title>
+      <ion-toolbar>
+        <ion-title>Daftar Tugas</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="triggerFileInput">
-            <ion-icon slot="icon-only" :icon="cloudUploadOutline"></ion-icon>
+          <ion-button @click="isOpen = true">
+            <ion-icon :icon="add" slot="icon-only"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content :fullscreen="true">
-      <input type="file" ref="fileInput" @change="handleFileUpload" accept=".json" style="display: none;" />
+
+    <ion-content>
       <ion-list>
-        <ion-item v-if="courses.length === 0">
-          <ion-label class="ion-text-center">Belum ada mata kuliah.</ion-label>
-        </ion-item>
-        <ion-item-sliding v-for="course in courses" :key="course">
-          <ion-item button @click="handleEdit(course)">
-            <ion-label>{{ course }}</ion-label>
+        <ion-item-sliding v-for="task in tasks" :key="task.id">
+          
+          <ion-item>
+            <ion-checkbox 
+              slot="start" 
+              :checked="task.completed"
+              @ionChange="toggleCheck(task)"
+            ></ion-checkbox>
+            <ion-label :style="task.completed ? 'text-decoration: line-through; opacity: 0.6' : ''">
+              <h2>{{ task.title }}</h2>
+              <p>{{ task.description }}</p>
+            </ion-label>
           </ion-item>
-          <ion-item-options side="end">
-            <ion-item-option color="danger" @click="handleDelete(course)">
-              <ion-icon slot="icon-only" :icon="trash"></ion-icon>
-            </ion-item-option>
-          </ion-item-options>
+
+<ion-item-options side="end">
+  <ion-item-option color="primary" @click="openEditModal(task)">
+    <ion-icon :icon="createOutline" slot="icon-only"></ion-icon>
+  </ion-item-option>
+  <ion-item-option color="danger" @click="deleteTask(task.id)">
+    <ion-icon :icon="trash" slot="icon-only"></ion-icon>
+  </ion-item-option>
+</ion-item-options>
+        
         </ion-item-sliding>
       </ion-list>
+
+      <div v-if="tasks.length === 0" class="ion-text-center ion-padding ion-margin-top">
+        <p style="color: gray;">Tidak ada tugas. Tekan + untuk menambah.</p>
+      </div>
+
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button @click="handleAdd()">
+        <ion-fab-button @click="isOpen = true">
           <ion-icon :icon="add"></ion-icon>
         </ion-fab-button>
       </ion-fab>
+
+      <task-modal 
+        :is-open="isOpen" 
+        @close="isOpen = false"
+        @save="handleSave"
+      />
+
     </ion-content>
   </ion-page>
 </template>
@@ -39,94 +62,49 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { 
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, 
-  IonItemSliding, IonItemOptions, IonItemOption, IonFab, IonFabButton, IonIcon, 
-  IonButtons, IonButton,
-  alertController, onIonViewWillEnter, toastController
+  IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton,
+  IonList, IonItem, IonLabel, IonCheckbox, IonItemSliding, IonItemOptions, IonItemOption,
+  IonFab, IonFabButton, IonIcon
 } from '@ionic/vue';
-import { add, trash, cloudUploadOutline } from 'ionicons/icons';
-import { useTasks } from '@/composables/useTasks';
+import { add, trash, createOutline, calendarOutline } from 'ionicons/icons';
+import { useTasks, Task } from '@/composables/useTasks';
+import TaskModal from '@/components/TaskModal.vue';
 
-const { courses, addCourse, deleteCourse, updateCourse, loadData } = useTasks(); // Tambahkan updateCourse
-const fileInput = ref<HTMLInputElement | null>(null);
+const { tasks, addTask, updateTask, deleteTask } = useTasks();
+const isOpen = ref(false);
 
-onIonViewWillEnter(() => {
-  loadData();
-});
+const toggleCheck = (task: Task) => {
+  updateTask(task.id, { completed: !task.completed });
+};
+// Tambahkan import createOutline
 
-const handleDelete = (courseName: string) => {
-  deleteCourse(courseName);
+// Tambahkan state baru
+const editingId = ref<number | null>(null);
+const selectedTask = ref<any>(null);
+
+// Fungsi buka modal (bisa untuk Baru atau Edit)
+const openEditModal = (task: any) => {
+  editingId.value = task.id;
+  selectedTask.value = { title: task.title, description: task.description, dueDate: task.dueDate };
+  isOpen.value = true;
 };
 
-// --- FUNGSI EDIT BARU ---
-const handleEdit = async (oldCourseName: string) => {
-  const alert = await alertController.create({
-    header: 'Edit Mata Kuliah',
-    inputs: [{ name: 'newCourseName', type: 'text', value: oldCourseName, placeholder: 'Nama Mata Kuliah' }],
-    buttons: [
-      { text: 'Batal', role: 'cancel' },
-      {
-        text: 'Simpan',
-        handler: (data) => {
-          if (data.newCourseName && data.newCourseName.trim() !== oldCourseName) {
-            updateCourse(oldCourseName, data.newCourseName.trim());
-          }
-        },
-      },
-    ],
-  });
-  await alert.present();
+// Update handleSave agar support edit
+const handleSave = (data: any) => {
+  if (editingId.value) {
+    updateTask(editingId.value, data);
+  } else {
+    addTask(data);
+  }
+  isOpen.value = false;
+  editingId.value = null;     // Reset
+  selectedTask.value = null;  // Reset
 };
 
-const handleAdd = async () => {
-  const alert = await alertController.create({
-    header: 'Tambah Mata Kuliah',
-    inputs: [{ name: 'courseName', type: 'text', placeholder: 'Nama Mata Kuliah Baru' }],
-    buttons: [
-      { text: 'Batal', role: 'cancel' },
-      {
-        text: 'Simpan',
-        handler: (data) => {
-          if (data.courseName) {
-            addCourse(data.courseName.trim());
-          }
-        },
-      },
-    ],
-  });
-  await alert.present();
-};
-
-const triggerFileInput = () => {
-  fileInput.value?.click();
-};
-
-const handleFileUpload = async (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (!target.files || target.files.length === 0) return;
-  const file = target.files[0];
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      const content = e.target?.result as string;
-      const newCourses = JSON.parse(content);
-      if (!Array.isArray(newCourses)) throw new Error("Format JSON tidak valid.");
-      let importedCount = 0;
-      newCourses.forEach((course: any) => {
-        if (typeof course === 'string') {
-          addCourse(course.trim());
-          importedCount++;
-        }
-      });
-      const toast = await toastController.create({ message: `${importedCount} mata kuliah berhasil diimpor!`, duration: 2000, color: 'success' });
-      await toast.present();
-    } catch (error) {
-      const toast = await toastController.create({ message: 'Gagal mengimpor file. Pastikan format JSON sudah benar.', duration: 3000, color: 'danger' });
-      await toast.present();
-    } finally {
-        if(target) target.value = '';
-    }
-  };
-  reader.readAsText(file);
+// Reset saat tombol tambah (+) ditekan
+const openAddModal = () => {
+  editingId.value = null;
+  selectedTask.value = null;
+  isOpen.value = true;
 };
 </script>
