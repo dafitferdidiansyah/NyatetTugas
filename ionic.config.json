@@ -1,0 +1,7 @@
+{
+  "name": "TaskManagerVue",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
