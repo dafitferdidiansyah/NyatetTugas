@@ -268,7 +268,7 @@ const handleFileUpload = (event: Event) => {
     } finally {
       if(target) target.value = '';
     }
-  };
+  }
   reader.readAsText(file);
 };
 </script>
