@@ -1,246 +1,153 @@
 <template>
   <ion-page>
-    <ion-header class="ion-no-border">
-      <ion-toolbar class="transparent-toolbar">
-        <ion-title class="main-title">NyatetTugas</ion-title>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Daftar Tugas</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="triggerFileInput" class="pastel-btn-icon">
-             <ion-icon :icon="cloudUploadOutline"></ion-icon>
+          <ion-select v-model="sortOrder" interface="action-sheet" placeholder="Urutkan">
+            <ion-select-option value="deadline">Deadline</ion-select-option>
+            <ion-select-option value="createdAt">Tanggal Dibuat</ion-select-option>
+            <ion-select-option value="modifiedAt">Terakhir Diubah</ion-select-option>
+          </ion-select>
+          <ion-button @click="triggerFileInput">
+            <ion-icon slot="icon-only" :icon="cloudUploadOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
+    <ion-content :fullscreen="true">
+      <input type="file" ref="fileInput" @change="handleFileUpload" accept=".json" style="display: none;" />
 
-    <ion-content :fullscreen="true" class="pastel-bg">
-      <div class="content-padding">
-        
-        <DashboardCard :progress="summary.progress" :pending="summary.pending" />
+      <ion-list>
+        <ion-item v-if="tasks.length === 0" lines="none">
+          <ion-label class="ion-text-center">Belum ada tugas.</ion-label>
+        </ion-item>
 
-        <div class="search-wrapper">
-          <ion-searchbar 
-            v-model="searchQuery" 
-            placeholder="Cari tugas..." 
-            class="pastel-search"
-            animated
-          ></ion-searchbar>
-        </div>
+        <ion-card v-for="task in sortedTasks" :key="task.id">
+          <ion-item lines="none">
+            <ion-checkbox
+              slot="start"
+              :checked="isTaskDone(task.status)"
+              @ionChange="toggleStatus(task.id, $event)"
+            ></ion-checkbox>
+            
+            <ion-label @click="openTaskModal(task)" :class="{ 'task-done': isTaskDone(task.status) }">
+              <h2>{{ task.nama_tugas }}</h2>
+              <p>{{ task.mata_kuliah }} | {{ task.deadline }}</p>
+            </ion-label>
+            
+            <ion-icon :icon="getPriorityIcon(task.prioritas).name" :color="getPriorityIcon(task.prioritas).color" slot="end"></ion-icon>
+          </ion-item>
+        </ion-card>
 
-        <input type="file" ref="fileInput" @change="handleFileUpload" accept=".json" style="display: none;" />
+      </ion-list>
 
-        <div v-if="groupedTasks.overdue.length > 0" class="section-group">
-          <h4 class="section-title text-danger">Terlewat! 🔥</h4>
-          <div v-for="task in groupedTasks.overdue" :key="task.id" class="task-card danger-card">
-             <div class="task-check">
-               <ion-checkbox :checked="false" @click.stop="toggleTaskStatus(task.id)"></ion-checkbox>
-             </div>
-             <div class="task-info" @click="openTaskModal(task)">
-               <h5>{{ task.nama_tugas }}</h5>
-               <p>{{ task.mata_kuliah }} • {{ task.deadline }}</p>
-             </div>
-             <div class="task-actions">
-               <ion-button fill="clear" size="small" color="medium" @click.stop="confirmDelete(task)">
-                 <ion-icon slot="icon-only" :icon="trashOutline" size="small"></ion-icon>
-               </ion-button>
-             </div>
-          </div>
-        </div>
-
-        <div v-if="groupedTasks.today.length > 0" class="section-group">
-          <h4 class="section-title">Hari Ini 📅</h4>
-           <div v-for="task in groupedTasks.today" :key="task.id" class="task-card primary-card">
-             <div class="task-check">
-               <ion-checkbox :checked="false" @click.stop="toggleTaskStatus(task.id)"></ion-checkbox>
-             </div>
-             <div class="task-info" @click="openTaskModal(task)">
-               <h5>{{ task.nama_tugas }}</h5>
-               <span class="badge">{{ task.mata_kuliah }}</span>
-             </div>
-             <div class="task-actions">
-                <ion-icon :icon="getPriorityIcon(task.prioritas)" :color="getPriorityColor(task.prioritas)" class="prio-icon"></ion-icon>
-                <ion-button fill="clear" size="small" color="medium" @click.stop="confirmDelete(task)">
-                 <ion-icon slot="icon-only" :icon="trashOutline" size="small"></ion-icon>
-               </ion-button>
-             </div>
-          </div>
-        </div>
-
-        <div v-if="groupedTasks.upcoming.length > 0" class="section-group">
-          <h4 class="section-title">Akan Datang 🚀</h4>
-           <div v-for="task in groupedTasks.upcoming" :key="task.id" class="task-card default-card">
-             <div class="task-check">
-               <ion-checkbox :checked="false" @click.stop="toggleTaskStatus(task.id)"></ion-checkbox>
-             </div>
-             <div class="task-info" @click="openTaskModal(task)">
-               <h5>{{ task.nama_tugas }}</h5>
-               <p>{{ task.deadline }}</p>
-             </div>
-             <div class="task-actions">
-               <ion-button fill="clear" size="small" color="medium" @click.stop="confirmDelete(task)">
-                 <ion-icon slot="icon-only" :icon="trashOutline" size="small"></ion-icon>
-               </ion-button>
-             </div>
-          </div>
-        </div>
-        
-        <div v-if="summary.total === 0" class="empty-state">
-           <ion-icon :icon="sparklesOutline" class="empty-icon"></ion-icon>
-           <p>Wah, semua bersih! 😎</p>
-        </div>
-
-      </div>
-
-      <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="custom-fab">
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button @click="openTaskModal()">
           <ion-icon :icon="add"></ion-icon>
         </ion-fab-button>
       </ion-fab>
-
     </ion-content>
   </ion-page>
 </template>
 
 <style scoped>
-/* --- Layout & Typography --- */
-.transparent-toolbar { --background: transparent; }
-.main-title { font-weight: 800; color: #4A5568; font-size: 1.5rem; padding-left: 10px; }
-.content-padding { padding: 16px; padding-bottom: 80px; }
-.pastel-bg { --background: #F7F9FC; }
-
-/* --- Search Bar --- */
-.search-wrapper { margin-bottom: 20px; }
-.pastel-search { 
-  --background: #ffffff; 
-  --box-shadow: 0 8px 20px rgba(181, 185, 255, 0.15); 
-  --border-radius: 16px; 
-  padding: 0;
+.task-done h2 {
+  text-decoration: line-through;
+  color: var(--ion-color-medium);
 }
-
-/* --- Section Headers --- */
-.section-group { margin-bottom: 24px; }
-.section-title { margin-left: 8px; font-weight: 700; color: #718096; font-size: 0.9rem; margin-bottom: 12px; letter-spacing: 0.5px; }
-.text-danger { color: #FF9AA2; }
-
-/* --- Task Card Design --- */
-.task-card {
-  background: white;
-  border-radius: 20px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
+.task-done p {
+  text-decoration: line-through;
 }
-.task-card:active { transform: scale(0.98); }
-
-/* Color Indicators (Left Border) */
-.danger-card { border-left: 6px solid #FF9AA2; background: #FFF5F5; }
-.primary-card { border-left: 6px solid #B5B9FF; }
-.default-card { border-left: 6px solid #C7F9CC; }
-
-/* Content Layout */
-.task-check { display: flex; align-items: center; margin-right: 12px; }
-.task-info { flex: 1; cursor: pointer; }
-.task-info h5 { margin: 0; font-weight: 700; color: #2D3748; font-size: 1rem; line-height: 1.4; }
-.task-info p { margin: 4px 0 0; font-size: 0.8rem; color: #A0AEC0; font-weight: 500; }
-
-/* Actions (Right Side) */
-.task-actions { display: flex; align-items: center; gap: 4px; }
-.prio-icon { font-size: 10px; margin-right: 8px; opacity: 0.8; }
-
-/* Badge Style */
-.badge { 
-  display: inline-block; margin-top: 4px;
-  background: #EBEFFF; color: #5A67D8; 
-  padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700;
+ion-card {
+  margin-left: 0;
+  margin-right: 0;
 }
-
-/* --- FAB & Empty State --- */
-.custom-fab ion-fab-button {
-  --background: #B5B9FF;
-  --box-shadow: 0 10px 25px rgba(181, 185, 255, 0.6);
-  --border-radius: 18px;
-  --color: white;
+ion-select {
+  --padding-start: 10px;
+  --padding-end: 10px;
+  min-width: 110px;
 }
-.empty-state { text-align: center; margin-top: 80px; color: #CBD5E0; }
-.empty-icon { font-size: 4rem; margin-bottom: 10px; opacity: 0.5; }
 </style>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue'; // Tambahkan 'computed'
 import { 
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonFab, IonFabButton, 
-  IonIcon, IonButtons, IonButton, IonSearchbar, IonCheckbox,
-  modalController, onIonViewWillEnter, toastController, alertController
+  IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, 
+  IonCard, IonFab, IonFabButton, IonIcon, IonButtons, IonButton, IonCheckbox,
+  IonSelect, IonSelectOption, // Tambahkan IonSelect & IonSelectOption
+  modalController, onIonViewWillEnter, toastController
 } from '@ionic/vue';
 import { 
-  add, cloudUploadOutline, alertCircle, warning, ellipse, trashOutline, sparklesOutline 
+  add, alertCircleOutline, removeOutline, radioButtonOffOutline, ellipseOutline, cloudUploadOutline
 } from 'ionicons/icons';
 import { useTasks, Task } from '@/composables/useTasks';
 import TaskModal from '@/components/TaskModal.vue';
-import DashboardCard from '@/components/DashboardCard.vue';
 
-// Mengambil fungsi dari Composable
-const { groupedTasks, summary, searchQuery, addMultipleTasks, loadData, toggleTaskStatus, deleteTask } = useTasks();
+const { tasks, addMultipleTasks, loadData, toggleTaskStatus } = useTasks();
 const fileInput = ref<HTMLInputElement | null>(null);
+const sortOrder = ref('deadline'); // State untuk menyimpan urutan
 
-onIonViewWillEnter(() => loadData());
-
-// Helper untuk Ikon & Warna Prioritas
-const getPriorityIcon = (p: string) => {
-  if (p === 'Tinggi') return alertCircle;
-  if (p === 'Sedang') return warning;
-  return ellipse;
-};
-
-const getPriorityColor = (p: string) => {
-    if (p === 'Tinggi') return 'danger';
-    if (p === 'Sedang') return 'warning';
-    return 'medium';
-}
-
-// --- FUNGSI HAPUS DENGAN KONFIRMASI ---
-const confirmDelete = async (task: Task) => {
-  const alert = await alertController.create({
-    header: 'Hapus Tugas?',
-    message: `Yakin ingin menghapus "${task.nama_tugas}"?`,
-    cssClass: 'custom-alert',
-    buttons: [
-      { text: 'Batal', role: 'cancel', cssClass: 'alert-button-cancel' },
-      { 
-        text: 'Hapus', 
-        role: 'destructive',
-        cssClass: 'alert-button-confirm',
-        handler: async () => {
-          deleteTask(task.id);
-          const toast = await toastController.create({
-            message: 'Tugas berhasil dihapus', duration: 1500, color: 'dark', position: 'bottom'
-          });
-          await toast.present();
-        } 
-      }
-    ]
+// Logika untuk mengurutkan tugas
+const sortedTasks = computed(() => {
+  const tasksCopy = [...tasks.value];
+  if (sortOrder.value === 'createdAt') {
+    return tasksCopy.sort((a, b) => b.createdAt - a.createdAt); // Terbaru dulu
+  } else if (sortOrder.value === 'modifiedAt') {
+    return tasksCopy.sort((a, b) => b.modifiedAt - a.modifiedAt); // Terbaru dulu
+  }
+  // Default: deadline
+  return tasksCopy.sort((a, b) => {
+    const dateA = new Date(a.deadline.split('-').reverse().join('-')).getTime();
+    const dateB = new Date(b.deadline.split('-').reverse().join('-')).getTime();
+    return dateA - dateB;
   });
-  await alert.present();
+});
+
+onIonViewWillEnter(() => {
+  loadData();
+});
+
+const getPriorityIcon = (priority: string) => {
+  const map: { [key: string]: { name: string, color: string } } = {
+    "Tinggi": { name: alertCircleOutline, color: "danger" },
+    "Sedang": { name: removeOutline, color: "warning" },
+    "Rendah": { name: radioButtonOffOutline, color: "success" }
+  };
+  return map[priority] || { name: ellipseOutline, color: "medium" };
 };
 
 const openTaskModal = async (task: Task | null = null) => {
   const modal = await modalController.create({
     component: TaskModal,
-    componentProps: { task: task ? { ...task } : null },
-    cssClass: 'my-custom-modal'
+    componentProps: {
+      task: task ? { ...task } : null,
+    },
   });
   await modal.present();
   const { role } = await modal.onDidDismiss();
-  if (role === 'confirm') loadData();
+  if (role === 'confirm') {
+    loadData();
+  }
 };
 
-const triggerFileInput = () => fileInput.value?.click();
+const isTaskDone = (status: string) => {
+  return status === 'Selesai' || status === 'Sudah Dikumpulkan';
+};
+
+const toggleStatus = (taskId: string, event: Event) => {
+  event.stopPropagation();
+  toggleTaskStatus(taskId);
+};
+
+const triggerFileInput = () => {
+  fileInput.value?.click();
+};
 
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (!target.files || target.files.length === 0) return;
+
   const file = target.files[0];
   const reader = new FileReader();
 
@@ -248,22 +155,17 @@ const handleFileUpload = (event: Event) => {
     try {
       const content = e.target?.result as string;
       const newTasks = JSON.parse(content);
-      if (!Array.isArray(newTasks)) throw new Error("Format JSON tidak valid.");
-      
+      if (!Array.isArray(newTasks)) { throw new Error("Format JSON tidak valid."); }
       const validTasks: Partial<Task>[] = newTasks.filter(task => 
         task.nama_tugas && task.mata_kuliah && task.deadline
       );
-      
-      if (validTasks.length > 0) addMultipleTasks(validTasks);
-      
-      const toast = await toastController.create({ 
-        message: `${validTasks.length} tugas diimpor!`, duration: 2000, color: 'success' 
-      });
+      if (validTasks.length > 0) {
+        addMultipleTasks(validTasks);
+      }
+      const toast = await toastController.create({ message: `${validTasks.length} tugas berhasil diimpor!`, duration: 2000, color: 'success' });
       await toast.present();
     } catch (error) {
-      const toast = await toastController.create({ 
-        message: 'Gagal impor. Cek format JSON.', duration: 3000, color: 'danger' 
-      });
+      const toast = await toastController.create({ message: 'Gagal mengimpor file. Pastikan format JSON sudah benar.', duration: 3000, color: 'danger' });
       await toast.present();
     } finally {
       if(target) target.value = '';
