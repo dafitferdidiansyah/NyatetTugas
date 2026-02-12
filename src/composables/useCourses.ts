@@ -1,5 +1,5 @@
-// src/composables/useCourses.ts
 import { ref, onMounted } from 'vue';
+import { storageService } from '@/services/storage';
 
 const STORAGE_KEY = 'my_courses_app';
 
@@ -10,16 +10,16 @@ export interface Course {
   day: string;
 }
 
-export function useCourses() {
-  const courses = ref<Course[]>([]);
+// Global State (Di luar fungsi)
+const courses = ref<Course[]>([]);
 
+export function useCourses() {
   const loadCourses = () => {
-    const value = localStorage.getItem(STORAGE_KEY);
-    if (value) courses.value = JSON.parse(value);
+    courses.value = storageService.get<Course[]>(STORAGE_KEY, []);
   };
 
   const saveCourses = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(courses.value));
+    storageService.set(STORAGE_KEY, courses.value);
   };
 
   const addCourse = (course: Omit<Course, 'id'>) => {
