@@ -26,7 +26,7 @@
               @ionChange="toggleComplete(task)"
             ></ion-checkbox>
 
-            <ion-label class="ion-text-wrap">
+            <ion-label class="ion-text-wrap" :class="{ 'task-done': task.completed }">
               <h2>{{ task.title }}</h2>
             <p>
               {{ getCourseName(task.courseId) }} 
@@ -90,6 +90,14 @@
 
 /* Agar badge dan icon di kanan rapi */
 .meta-end { display: flex; align-items: center; }
+
+/* Efek Coret untuk Tugas Selesai */
+.task-done h2,
+.task-done p {
+  text-decoration: line-through;
+  color: #888; /* Warnanya dibuat sedikit redup/abu-abu agar lebih nyata efek 'selesai'-nya */
+  transition: all 0.3s ease; /* Biar animasi nyoretnya mulus */
+}
 </style>
 
 <script setup lang="ts">
