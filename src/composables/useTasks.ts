@@ -29,8 +29,8 @@ export function useTasks() {
   const { scheduleNotification, cancelNotification } = useNotifications();
 
   const loadTasks = () => {
-      tasks.value = storageService.get<Task[]>(STORAGE_KEY, []);
-    };
+    tasks.value = storageService.get<Task[]>(STORAGE_KEY, []);
+  };
 
   const saveTasks = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks.value));
@@ -44,6 +44,23 @@ export function useTasks() {
         recursive: true
       });
     } catch (e) { /* Folder sudah ada */ }
+  };
+
+  // --- FUNGSI BARU: Helper untuk Hapus File Fisik dengan Aman ---
+  const deletePhysicalFile = async (filePath: string) => {
+    try {
+      // Ambil nama filenya saja (memotong path bawaan sistem agar tidak dobel/error di HP Xiaomi)
+      const fileName = filePath.split('/').pop();
+      if (!fileName) return;
+
+      await Filesystem.deleteFile({
+        path: `${APP_FOLDER}/${fileName}`,
+        directory: Directory.Documents
+      });
+      console.log(`[Berhasil] File fisik dihapus: ${fileName}`);
+    } catch (e) {
+      console.log(`[Skip] File mungkin sudah tidak ada: ${filePath}`);
+    }
   };
 
   const addTask = (task: Partial<Task>) => {
@@ -62,10 +79,24 @@ export function useTasks() {
     scheduleNotification(newTask);
   };
 
-  const updateTask = (id: number, updates: Partial<Task>) => {
+  const updateTask = async (id: number, updates: Partial<Task>) => {
     const index = tasks.value.findIndex(t => t.id === id);
     if (index !== -1) {
-      tasks.value[index] = { ...tasks.value[index], ...updates };
+      const oldTask = tasks.value[index];
+
+      // --- LOGIKA BARU: Jika ada gambar/file yang disilang (dihapus) saat Edit Tugas ---
+      if (updates.attachments) {
+        const oldFiles = oldTask.attachments.map(a => a.filePath);
+        const newFiles = updates.attachments.map(a => a.filePath);
+        
+        // Cari file yang ada di tugas lama tapi TIDAK ADA di form edit baru
+        const removedFiles = oldFiles.filter(f => !newFiles.includes(f));
+        for (const file of removedFiles) {
+          await deletePhysicalFile(file); // Hapus fisiknya dari memory HP
+        }
+      }
+
+      tasks.value[index] = { ...oldTask, ...updates };
       saveTasks();
       const updatedTask = tasks.value[index];
       if (updatedTask.completed) cancelNotification(id);
@@ -75,16 +106,14 @@ export function useTasks() {
 
   const deleteTask = async (id: number) => {
     const task = tasks.value.find(t => t.id === id);
+    
+    // --- LOGIKA BARU: Hapus file fisik saat Tugas Dihapus sepenuhnya ---
     if (task?.attachments) {
       for (const file of task.attachments) {
-        try {
-          await Filesystem.deleteFile({
-             path: `${APP_FOLDER}/${file.filePath}`,
-             directory: Directory.Documents
-          });
-        } catch (e) { console.log('File cleanup skip'); }
+        await deletePhysicalFile(file.filePath);
       }
     }
+    
     tasks.value = tasks.value.filter(t => t.id !== id);
     saveTasks();
     cancelNotification(id);
@@ -101,7 +130,9 @@ export function useTasks() {
     try {
       await ensureFolder();
       const result = await Filesystem.readdir({ path: APP_FOLDER, directory: Directory.Documents });
-      const activeFiles = tasks.value.flatMap(t => t.attachments.map(a => a.filePath));
+      
+      // Amankan pembacaan nama file
+      const activeFiles = tasks.value.flatMap(t => t.attachments.map(a => a.filePath.split('/').pop()));
       
       for (const file of result.files) {
         if (!activeFiles.includes(file.name)) {

@@ -8,6 +8,7 @@ export interface Course {
   name: string;
   lecturer: string;
   day: string;
+  time: string; // Menambahkan tipe data waktu
 }
 
 // Global State (Di luar fungsi)

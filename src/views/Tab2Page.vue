@@ -16,7 +16,7 @@
 
     <ion-content class="ion-padding">
       
-      <ion-list v-if="filteredTasks.length > 0">
+      <ion-list v-if="filteredTasks.length > 0" ref="listRef">
         <ion-item-sliding v-for="task in filteredTasks" :key="task.id">
           
           <ion-item>
@@ -114,26 +114,39 @@ const editingId = ref<number | null>(null);
 const editingData = ref<any>(null);
 const searchQuery = ref('');
 
+// --- TAMBAHAN UNTUK FITUR TUTUP OTOMATIS GESERAN ---
+const listRef = ref<any>(null);
+
+const closeSliding = () => {
+  if (listRef.value && listRef.value.$el) {
+    listRef.value.$el.closeSlidingItems();
+  }
+};
+// ---------------------------------------------------
+// Helpers
+const getCourseName = (id: number | null) => {
+  const c = courses.value.find(x => x.id === id);
+  return c ? c.name : 'Umum';
+};
+
 // Filter & Sorting Logic
 const filteredTasks = computed(() => {
-  let res = [...tasks.value]; // Copy array agar tidak mutasi asli
+  let res = [...tasks.value]; 
 
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
     res = res.filter(t => 
       t.title.toLowerCase().includes(q) || 
-      (t.description && t.description.toLowerCase().includes(q))
+      (t.description && t.description.toLowerCase().includes(q)) ||
+       getCourseName(t.courseId).toLowerCase().includes(q)
     );
   }
 
   return res.sort((a, b) => {
-    // 1. Tetap utamakan yang belum selesai
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
 
-    // 2. Hitung Bobot Prioritas (Tinggi: 3, Sedang: 2, Rendah: 1)
     const getPrioValue = (p: string) => (p === 'Tinggi' ? 3 : p === 'Sedang' ? 2 : 1);
     
-    // 3. Hitung Sisa Hari (Urgency)
     const getDaysDiff = (dateStr: string) => {
       if (!dateStr) return 999;
       const diff = new Date(dateStr).getTime() - new Date().getTime();
@@ -143,20 +156,15 @@ const filteredTasks = computed(() => {
     const scoreA = (getPrioValue(a.priority) * 10) - getDaysDiff(a.dueDate);
     const scoreB = (getPrioValue(b.priority) * 10) - getDaysDiff(b.dueDate);
 
-    return scoreB - scoreA; // Skor tinggi di atas
+    return scoreB - scoreA; 
   });
 });
 
-// Helpers
-const getCourseName = (id: number | null) => {
-  const c = courses.value.find(x => x.id === id);
-  return c ? c.name : 'Umum';
-};
 
 const getPriorityColor = (p: string) => {
   if (p === 'Tinggi') return 'danger';
   if (p === 'Sedang') return 'warning';
-  return 'success'; // Rendah = Hijau
+  return 'success'; 
 };
 
 const getDeadlineStatus = (dateStr: string) => {
@@ -183,14 +191,31 @@ const formatDate = (date: string) => {
 };
 
 // Actions
-const openModal = () => { editingId.value = null; editingData.value = null; isModalOpen.value = true; };
-const editTask = (task: Task) => { editingId.value = task.id; editingData.value = task; isModalOpen.value = true; };
+const openModal = () => { 
+  closeSliding(); // Tutup geseran jika ada yang terbuka
+  editingId.value = null; 
+  editingData.value = null; 
+  isModalOpen.value = true; 
+};
+
+const editTask = (task: Task) => { 
+  closeSliding(); // Tutup geseran sebelum edit
+  editingId.value = task.id; 
+  editingData.value = task; 
+  isModalOpen.value = true; 
+};
+
 const handleSave = (formData: any) => {
   if (editingId.value) updateTask(editingId.value, formData);
   else addTask(formData);
   isModalOpen.value = false;
 };
-const handleDelete = (id: number) => deleteTask(id);
+
+const handleDelete = (id: number) => {
+  closeSliding(); // Tutup geseran sebelum hapus
+  deleteTask(id);
+};
+
 const toggleComplete = (task: Task) => {
   updateTask(task.id, { completed: !task.completed });
 };

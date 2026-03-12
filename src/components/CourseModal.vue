@@ -14,10 +14,17 @@
         <ion-label position="stacked">Nama Mata Kuliah</ion-label>
         <ion-input v-model="form.name" placeholder="Contoh: Algoritma"></ion-input>
       </ion-item>
+      
       <ion-item>
         <ion-label position="stacked">Nama Dosen</ion-label>
         <ion-input v-model="form.lecturer" placeholder="Contoh: Pak Budi"></ion-input>
       </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Waktu</ion-label>
+        <ion-input v-model="form.time" placeholder="Contoh: 13.50 - 14.00"></ion-input>
+      </ion-item>
+
       <ion-item>
         <ion-label position="stacked">Hari</ion-label>
         <ion-select v-model="form.day" placeholder="Pilih Hari">
@@ -47,14 +54,14 @@ import {
 const props = defineProps<{ isOpen: boolean; editingId: number | null; initialData: any }>();
 const emit = defineEmits(['close', 'save']);
 
-const form = ref({ name: '', lecturer: '', day: '' });
+const form = ref({ name: '', lecturer: '', time: '', day: '' });
 
 // Isi form otomatis jika sedang Edit
 watch(() => props.initialData, (newVal) => {
   if (newVal) {
     form.value = { ...newVal };
   } else {
-    form.value = { name: '', lecturer: '', day: '' };
+    form.value = { name: '', lecturer: '', time: '', day: '' };
   }
 });
 

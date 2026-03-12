@@ -12,13 +12,13 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ion-list v-if="courses.length > 0">
+      <ion-list v-if="courses.length > 0" ref="listRef">
         <ion-item-sliding v-for="course in courses" :key="course.id">
           <ion-item>
             <ion-icon :icon="bookOutline" slot="start" color="primary"></ion-icon>
             <ion-label>
               <h2>{{ course.name }}</h2>
-              <p>{{ course.lecturer }}</p>
+              <p>{{ course.lecturer }} <span v-if="course.time"> • {{ course.time }}</span></p>
             </ion-label>
             <ion-badge slot="end" color="medium">{{ course.day }}</ion-badge>
           </ion-item>
@@ -27,7 +27,7 @@
             <ion-item-option color="primary" @click="openModal(course)">
               <ion-icon :icon="createOutline" slot="icon-only"></ion-icon>
             </ion-item-option>
-            <ion-item-option color="danger" @click="deleteCourse(course.id)">
+            <ion-item-option color="danger" @click="handleDelete(course.id)">
               <ion-icon :icon="trash" slot="icon-only"></ion-icon>
             </ion-item-option>
           </ion-item-options>
@@ -66,16 +66,37 @@ const { courses, addCourse, updateCourse, deleteCourse } = useCourses();
 const isModalOpen = ref(false);
 const editingId = ref<number | null>(null);
 const selectedCourse = ref<any>(null);
+const listRef = ref<any>(null);
+
+// Fungsi pembantu untuk menutup geseran list
+const closeSliding = () => {
+  if (listRef.value && listRef.value.$el) {
+    listRef.value.$el.closeSlidingItems();
+  }
+};
 
 const openModal = (course: Course | null) => {
+  closeSliding(); // Menutup geseran saat tombol edit di-klik
+  
   if (course) {
     editingId.value = course.id;
-    selectedCourse.value = { name: course.name, lecturer: course.lecturer, day: course.day };
+    selectedCourse.value = { 
+      name: course.name, 
+      lecturer: course.lecturer, 
+      day: course.day,
+      time: course.time 
+    };
   } else {
     editingId.value = null;
     selectedCourse.value = null;
   }
   isModalOpen.value = true;
+};
+
+// Fungsi perantara hapus untuk menutup geseran
+const handleDelete = (id: number) => {
+  closeSliding(); // Menutup geseran saat dihapus
+  deleteCourse(id);
 };
 
 const handleSave = (data: any) => {
