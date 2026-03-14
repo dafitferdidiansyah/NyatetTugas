@@ -29,25 +29,8 @@ export function useCourses() {
   const scheduleMatkulNotification = async (course: Course) => {
     if (!course.day || !course.time) return;
 
-    // 1. CEK & REQUEST PERMISSION (Wajib agar tidak diblokir Android/iOS)
-    let permStatus = await LocalNotifications.checkPermissions();
-    if (permStatus.display !== 'granted') {
-      permStatus = await LocalNotifications.requestPermissions();
-      if (permStatus.display !== 'granted') {
-        console.warn('Izin notifikasi ditolak oleh pengguna.');
-        return; // Batal menjadwalkan karena tidak diizinkan
-      }
-    }
-
-    // 2. PASTIKAN CHANNEL DIBUAT (Solusi Wajib untuk HP POCO/MIUI/Android 8+)
-    await LocalNotifications.createChannel({
-      id: 'channel_matkul_brutal',
-      name: 'Pengingat Matkul',
-      description: 'Alarm brutal agar tidak telat kelas',
-      importance: 5, // 5 = High importance (Popup/Heads-up)
-      visibility: 1, // 1 = Public (Muncul di lockscreen)
-      vibration: true,
-    });
+    // Catatan: Pembuatan channel dan request permission dihapus dari sini
+    // karena sudah di-handle sepenuhnya oleh useNotifications.ts
 
     const dayMap: Record<string, number> = {
       'Minggu': 1, 'Senin': 2, 'Selasa': 3, 'Rabu': 4, 'Kamis': 5, 'Jumat': 6, 'Sabtu': 7
@@ -63,7 +46,6 @@ export function useCourses() {
       weekday = weekday === 1 ? 7 : weekday - 1;
     }
 
-    // FIX: Gunakan safeId agar Android tidak Crash!
     const safeId = Number(course.id.toString().slice(-9));
 
     await LocalNotifications.schedule({
@@ -87,17 +69,16 @@ export function useCourses() {
   };
 
   const cancelMatkulNotification = async (id: number) => {
-    // FIX: Gunakan safeId juga saat menghapus
     const safeId = Number(id.toString().slice(-9));
     await LocalNotifications.cancel({ notifications: [{ id: safeId }] });
   };
   // ------------------------------------
   
   const addCourse = (course: Omit<Course, 'id'>) => {
-    const newCourse = { id: Date.now(), ...course }; // Simpan ke variabel dulu
+    const newCourse = { id: Date.now(), ...course }; 
     courses.value.push(newCourse);
     saveCourses();
-    scheduleMatkulNotification(newCourse); // FIX: Panggil notifikasi
+    scheduleMatkulNotification(newCourse); 
   };
 
   const updateCourse = (id: number, updatedCourse: Partial<Course>) => {
@@ -105,14 +86,14 @@ export function useCourses() {
     if (index !== -1) {
       courses.value[index] = { ...courses.value[index], ...updatedCourse };
       saveCourses();
-      scheduleMatkulNotification(courses.value[index]); // FIX: Update notifikasi
+      scheduleMatkulNotification(courses.value[index]); 
     }
   };
 
   const deleteCourse = (id: number) => {
     courses.value = courses.value.filter(c => c.id !== id);
     saveCourses();
-    cancelMatkulNotification(id); // FIX: Batalkan notifikasi jika matkul dihapus
+    cancelMatkulNotification(id); 
   };
 
   const importCourses = (newCourses: Course[]) => {
