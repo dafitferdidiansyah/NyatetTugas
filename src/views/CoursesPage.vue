@@ -3,11 +3,6 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Mata Kuliah</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="openModal(null)">
-            <ion-icon :icon="add" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -49,6 +44,13 @@
         @close="isModalOpen = false"
         @save="handleSave"
       />
+
+        <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+      <ion-fab-button color="primary" @click="openModal">
+        <ion-icon :icon="add"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+
     </ion-content>
   </ion-page>
 </template>
@@ -57,7 +59,7 @@
 import { ref } from 'vue';
 import { 
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, 
-  IonList, IonItem, IonLabel, IonIcon, IonBadge, IonButtons, IonButton,
+  IonList, IonItem, IonLabel, IonIcon, IonBadge, IonFab, IonFabButton,
   IonItemSliding, IonItemOptions, IonItemOption
 } from '@ionic/vue';
 import { bookOutline, schoolOutline, add, trash, createOutline } from 'ionicons/icons';

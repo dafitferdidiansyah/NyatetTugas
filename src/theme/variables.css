@@ -1,13 +1,13 @@
 /* src/theme/variables.css */
 
 :root {
-  /** Warna Utama (Biru) **/
-  --ion-color-primary: #3880ff;
-  --ion-color-primary-rgb: 56, 128, 255;
+/** Warna Utama (Merah Darah / Crimson) **/
+  --ion-color-primary: #d32f2f;
+  --ion-color-primary-rgb: 211, 47, 47;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #3171e0;
-  --ion-color-primary-tint: #4c8dff;
+  --ion-color-primary-shade: #ba2929;
+  --ion-color-primary-tint: #d74444;
 
   /** SETTING TEMA GELAP PERMANEN **/
   --ion-background-color: #000000;

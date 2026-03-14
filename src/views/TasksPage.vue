@@ -2,13 +2,8 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Daftar Tugas</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="openModal">
-            <ion-icon :icon="add" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
+  <ion-title>Daftar Tugas</ion-title>
+</ion-toolbar>
       <ion-toolbar>
         <ion-searchbar v-model="searchQuery" placeholder="Cari tugas..." class="simple-search"></ion-searchbar>
       </ion-toolbar>
@@ -75,6 +70,11 @@
         @close="isModalOpen = false" 
         @save="handleSave" 
       />
+      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+      <ion-fab-button color="primary" @click="openModal">
+        <ion-icon :icon="add"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
 
     </ion-content>
   </ion-page>
@@ -104,7 +104,7 @@
 import { ref, computed } from 'vue';
 import { 
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, 
-  IonList, IonItem, IonLabel, IonCheckbox, IonButtons, IonButton, IonIcon, 
+  IonList, IonItem, IonLabel, IonCheckbox, IonFab, IonFabButton, IonIcon, 
   IonItemSliding, IonItemOptions, IonItemOption, IonBadge, IonSearchbar
 } from '@ionic/vue';
 import { 
