@@ -107,7 +107,7 @@ import { computed, ref, onMounted } from 'vue';
 import { 
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, 
   IonGrid, IonRow, IonCol, IonCard, IonCardContent, 
-  IonIcon, IonList, IonItem, IonLabel, IonBadge, IonNote, IonText, alertController 
+  IonIcon, IonList, IonItem, IonLabel, IonBadge, IonNote, alertController 
 } from '@ionic/vue';
 import { downloadOutline, cloudUploadOutline, trashOutline, bookOutline } from 'ionicons/icons';
 import { useTasks } from '@/composables/useTasks';
@@ -115,7 +115,6 @@ import { useCourses } from '@/composables/useCourses';
 import { useNotifications } from '@/composables/useNotifications';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
-import { storageService } from '@/services/storage';
 
 const { tasks, importTasks, ensureFolder, cleanupStorage } = useTasks();
 const { courses, importCourses } = useCourses();
