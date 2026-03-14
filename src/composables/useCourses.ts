@@ -49,5 +49,5 @@ export function useCourses() {
 
   onMounted(loadCourses);
 
-  return { courses, addCourse, updateCourse, deleteCourse };
+ return { courses, addCourse, updateCourse, deleteCourse, importCourses };
 }
