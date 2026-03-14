@@ -6,7 +6,7 @@ import TabsPage from '../views/TabsPage.vue';
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/tabs/tab1'
+    redirect: '/tabs/Dashboard'
   },
   {
     path: '/tabs/',
@@ -14,20 +14,20 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: '',
-        redirect: '/tabs/tab1'
+        redirect: '/tabs/dashboard'
       },
       {
-        path: 'tab1',
-        component: () => import('@/views/Tab1Page.vue')
+        path: 'dashboard',
+        component: () => import('@/views/DashboardPage.vue')
       },
       {
-        path: 'tab2',
-        component: () => import('@/views/Tab2Page.vue')
+        path: 'tasks',
+        component: () => import('@/views/TasksPage.vue')
       },
       // TAMBAHKAN INI (Tab 3)
       {
-        path: 'tab3',
-        component: () => import('@/views/Tab3Page.vue')
+        path: 'courses',
+        component: () => import('@/views/CoursesPage.vue')
       }
     ]
   }

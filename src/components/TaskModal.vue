@@ -40,12 +40,12 @@
       </ion-grid>
 
       <ion-item class="input-item">
-        <ion-label position="stacked">Tenggat Waktu</ion-label>
+        <ion-label position="stacked">Deadline</ion-label>
         <ion-input type="date" v-model="form.dueDate"></ion-input>
       </ion-item>
 
       <div class="rich-input-wrapper">
-        <label class="rich-label">Catatan & Lampiran</label>
+        <label class="rich-label">Catatan</label>
         <div class="rich-container">
           <ion-textarea 
             v-model="form.description" 
@@ -76,7 +76,7 @@
             <ion-button fill="clear" size="small" @click="triggerFileSelect">
               <ion-icon slot="icon-only" :icon="attachOutline"></ion-icon>
             </ion-button>
-            <span v-if="form.attachments.length === 0" class="placeholder-text">Tambahkan foto atau dokumen...</span>
+            <span v-if="form.attachments.length === 0" class="placeholder-text">Tambahkan lampiran...</span>
           </div>
         </div>
       </div>
@@ -85,7 +85,7 @@
 
       <ion-button expand="block" class="ion-margin-top btn-save" @click="save" :disabled="!form.title">
         <ion-icon slot="start" :icon="saveOutline"></ion-icon>
-        Simpan Tugas
+        Simpan
       </ion-button>
 
     </ion-content>

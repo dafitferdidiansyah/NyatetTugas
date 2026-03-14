@@ -4,17 +4,17 @@
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
         
-        <ion-tab-button tab="tab1" href="/tabs/tab1">
+        <ion-tab-button tab="dashboard" href="/tabs/dashboard">
           <ion-icon :icon="homeOutline" />
           <ion-label>Beranda</ion-label>
         </ion-tab-button>
         
-        <ion-tab-button tab="tab2" href="/tabs/tab2">
+        <ion-tab-button tab="tasks" href="/tabs/tasks">
           <ion-icon :icon="listOutline" />
           <ion-label>Tugas</ion-label>
         </ion-tab-button>
         
-        <ion-tab-button tab="tab3" href="/tabs/tab3">
+        <ion-tab-button tab="courses" href="/tabs/courses">
           <ion-icon :icon="libraryOutline" />
           <ion-label>Matkul</ion-label>
         </ion-tab-button>
