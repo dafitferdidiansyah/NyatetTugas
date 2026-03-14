@@ -20,7 +20,7 @@
         <ion-input v-model="form.lecturer" placeholder="Contoh: Pak Budi"></ion-input>
       </ion-item>
 
-<ion-item>
+      <ion-item>
         <ion-label position="stacked">Waktu Mulai</ion-label>
         <ion-input 
           type="time" 

@@ -14,7 +14,7 @@
             <ion-label>
               <h2>{{ course.name }}</h2>
               <p>{{ course.lecturer }} 
-                <span v-if="course.time"> • {{ course.time }}</span>
+                <span v-if="course.time"> • {{ course.time }}<template v-if="course.endTime">-{{ course.endTime }}</template></span>
                 <span v-if="course.room"> • {{ course.room }}</span>
               </p>
             </ion-label>
@@ -90,6 +90,7 @@ const openModal = (course: Course | null) => {
       lecturer: course.lecturer, 
       day: course.day,
       time: course.time,
+      endTime: course.endTime, // BUG FIX: endTime ditambahkan agar tidak hilang saat diedit
       room: course.room
     };
   } else {

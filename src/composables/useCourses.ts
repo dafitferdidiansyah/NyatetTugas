@@ -29,6 +29,26 @@ export function useCourses() {
   const scheduleMatkulNotification = async (course: Course) => {
     if (!course.day || !course.time) return;
 
+    // 1. CEK & REQUEST PERMISSION (Wajib agar tidak diblokir Android/iOS)
+    let permStatus = await LocalNotifications.checkPermissions();
+    if (permStatus.display !== 'granted') {
+      permStatus = await LocalNotifications.requestPermissions();
+      if (permStatus.display !== 'granted') {
+        console.warn('Izin notifikasi ditolak oleh pengguna.');
+        return; // Batal menjadwalkan karena tidak diizinkan
+      }
+    }
+
+    // 2. PASTIKAN CHANNEL DIBUAT (Solusi Wajib untuk HP POCO/MIUI/Android 8+)
+    await LocalNotifications.createChannel({
+      id: 'channel_matkul_brutal',
+      name: 'Pengingat Matkul',
+      description: 'Alarm brutal agar tidak telat kelas',
+      importance: 5, // 5 = High importance (Popup/Heads-up)
+      visibility: 1, // 1 = Public (Muncul di lockscreen)
+      vibration: true,
+    });
+
     const dayMap: Record<string, number> = {
       'Minggu': 1, 'Senin': 2, 'Selasa': 3, 'Rabu': 4, 'Kamis': 5, 'Jumat': 6, 'Sabtu': 7
     };
@@ -54,7 +74,6 @@ export function useCourses() {
           body: `${course.name} di ruang ${course.room} mulai jam ${course.time}. Jangan telat!`,
           channelId: 'channel_matkul_brutal', 
           schedule: {
-            every: 'week',
             on: {
               weekday: weekday,
               hour: dateObj.getHours(),
