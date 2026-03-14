@@ -37,6 +37,11 @@ export function useCourses() {
     }
   };
 
+  const importCourses = (newCourses: Course[]) => {
+  courses.value = newCourses;
+  saveCourses();
+};
+
   const deleteCourse = (id: number) => {
     courses.value = courses.value.filter(c => c.id !== id);
     saveCourses();

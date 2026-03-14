@@ -183,22 +183,7 @@ const openFile = async (file: Attachment) => {
 
 // Ganti fungsi removeAttachment yang lama dengan yang ini
 const removeAttachment = async (index: number) => {
-  const file = form.value.attachments[index];
-  
-  try {
-    // 1. Hapus file fisik dari folder NyatetTugas di Documents
-    await Filesystem.deleteFile({
-      path: `NyatetTugas/${file.filePath}`,
-      directory: Directory.Documents
-    });
-    console.log('File fisik berhasil dihapus dari storage');
-  } catch (e) {
-    // Jika file tidak ditemukan (mungkin sudah terhapus manual), tetap lanjut hapus dari list UI
-    console.error('Gagal menghapus file fisik atau file tidak ditemukan:', e);
-  }
-
-  // 2. Hapus dari daftar tampilan (UI)
-  form.value.attachments.splice(index, 1);
+ form.value.attachments.splice(index, 1);
 };
 const truncateName = (name: string) => name.length > 15 ? name.substring(0, 12) + '...' : name;
 const save = () => emit('save', form.value);

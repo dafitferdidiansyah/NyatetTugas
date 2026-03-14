@@ -24,16 +24,19 @@ export interface Task {
 }
 
 const tasks = ref<Task[]>([]);
+let isLoaded = false;
 
 export function useTasks() {
   const { scheduleNotification, cancelNotification } = useNotifications();
 
   const loadTasks = () => {
+    if (isLoaded) return; // Mencegah reload berulang
     tasks.value = storageService.get<Task[]>(STORAGE_KEY, []);
+    isLoaded = true;
   };
 
   const saveTasks = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks.value));
+    storageService.set(STORAGE_KEY, tasks.value);
   };
 
   const ensureFolder = async () => {

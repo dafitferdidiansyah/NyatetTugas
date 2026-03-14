@@ -118,7 +118,7 @@ import { Share } from '@capacitor/share';
 import { storageService } from '@/services/storage';
 
 const { tasks, importTasks, ensureFolder, cleanupStorage } = useTasks();
-const { courses } = useCourses();
+const { courses, importCourses } = useCourses();
 const { requestPermissions } = useNotifications();
 
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -181,8 +181,8 @@ const handleImport = async (event: Event) => {
           { text: 'Ya, Timpa', handler: () => {
             if (json.tasks) importTasks(json.tasks);
             if (json.courses) {
-              storageService.set('my_courses_app', json.courses); // Lebih rapi dan aman
-              window.location.reload();
+              importCourses(json.courses);
+              // Tidak perlu window.location.reload()
             }
           }}
         ]
