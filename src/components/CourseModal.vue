@@ -20,9 +20,18 @@
         <ion-input v-model="form.lecturer" placeholder="Contoh: Pak Budi"></ion-input>
       </ion-item>
 
+<ion-item>
+        <ion-label position="stacked">Waktu Mulai</ion-label>
+        <ion-input 
+          type="time" 
+          v-model="form.time" 
+          placeholder="Pilih Waktu">
+        </ion-input>
+      </ion-item>
+
       <ion-item>
-        <ion-label position="stacked">Waktu</ion-label>
-        <ion-input v-model="form.time" placeholder="Contoh: 13.50 - 14.00"></ion-input>
+        <ion-label position="stacked">Waktu Selesai</ion-label>
+        <ion-input type="time" v-model="form.endTime" placeholder="Pilih Jam Selesai"></ion-input>
       </ion-item>
 
       <ion-item>
@@ -59,14 +68,20 @@ import {
 const props = defineProps<{ isOpen: boolean; editingId: number | null; initialData: any }>();
 const emit = defineEmits(['close', 'save']);
 
-const form = ref({ name: '', lecturer: '', time: '', day: '', room: '' });
-
+const form = ref({ name: '', lecturer: '', time: '', endTime: '', day: '', room: '' });
 // Isi form otomatis jika sedang Edit
 watch(() => props.initialData, (newVal) => {
   if (newVal) {
-    form.value = { name: newVal.name || '', lecturer: newVal.lecturer || '', time: newVal.time || '', day: newVal.day || '', room: newVal.room || '' };
+    form.value = { 
+      name: newVal.name || '', 
+      lecturer: newVal.lecturer || '', 
+      time: newVal.time || '', 
+      endTime: newVal.endTime || '', 
+      day: newVal.day || '', 
+      room: newVal.room || '' 
+    };
   } else {
-    form.value = { name: '', lecturer: '', time: '', day: '', room: '' };
+    form.value = { name: '', lecturer: '', time: '', endTime: '', day: '', room: '' };
   }
 });
 

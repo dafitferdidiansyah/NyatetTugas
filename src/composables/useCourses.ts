@@ -1,5 +1,6 @@
 import { ref, onMounted } from 'vue';
 import { storageService } from '@/services/storage';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 const STORAGE_KEY = 'my_courses_app';
 
@@ -8,11 +9,11 @@ export interface Course {
   name: string;
   lecturer: string;
   day: string;
-  time: string; // Menambahkan tipe data waktu
+  time: string; // Waktu Mulai (Patokan Alarm)
+  endTime?: string;
   room: string;
 }
 
-// Global State (Di luar fungsi)
 const courses = ref<Course[]>([]);
 
 export function useCourses() {
@@ -24,9 +25,60 @@ export function useCourses() {
     storageService.set(STORAGE_KEY, courses.value);
   };
 
+  // --- ALGORITMA PENJADWALAN MATKUL ---
+  const scheduleMatkulNotification = async (course: Course) => {
+    if (!course.day || !course.time) return;
+
+    const dayMap: Record<string, number> = {
+      'Minggu': 1, 'Senin': 2, 'Selasa': 3, 'Rabu': 4, 'Kamis': 5, 'Jumat': 6, 'Sabtu': 7
+    };
+    let weekday = dayMap[course.day];
+    if (!weekday) return;
+
+    const [hours, minutes] = course.time.split(':').map(Number);
+    const dateObj = new Date();
+    dateObj.setHours(hours, minutes - 15, 0, 0);
+
+    if (dateObj.getHours() > hours) {
+      weekday = weekday === 1 ? 7 : weekday - 1;
+    }
+
+    // FIX: Gunakan safeId agar Android tidak Crash!
+    const safeId = Number(course.id.toString().slice(-9));
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: safeId, 
+          title: `🚨 MATKUL SEBENTAR LAGI!`,
+          body: `${course.name} di ruang ${course.room} mulai jam ${course.time}. Jangan telat!`,
+          channelId: 'channel_matkul_brutal', 
+          schedule: {
+            every: 'week',
+            on: {
+              weekday: weekday,
+              hour: dateObj.getHours(),
+              minute: dateObj.getMinutes()
+            }
+          }
+        }
+      ]
+    });
+    console.log(`Pengingat matkul ${course.name} disetel mingguan pada hari ke-${weekday} jam ${dateObj.getHours()}:${dateObj.getMinutes()}`);
+  };
+
+  const cancelMatkulNotification = async (id: number) => {
+    // FIX: Gunakan safeId juga saat menghapus
+    const safeId = Number(id.toString().slice(-9));
+    await LocalNotifications.cancel({ notifications: [{ id: safeId }] });
+  };
+  // ------------------------------------
+  
   const addCourse = (course: Omit<Course, 'id'>) => {
-    courses.value.push({ id: Date.now(), ...course });
+    const newCourse = { id: Date.now(), ...course }; // Simpan ke variabel dulu
+    courses.value.push(newCourse);
     saveCourses();
+    scheduleMatkulNotification(newCourse); // FIX: Panggil notifikasi
   };
 
   const updateCourse = (id: number, updatedCourse: Partial<Course>) => {
@@ -34,20 +86,23 @@ export function useCourses() {
     if (index !== -1) {
       courses.value[index] = { ...courses.value[index], ...updatedCourse };
       saveCourses();
+      scheduleMatkulNotification(courses.value[index]); // FIX: Update notifikasi
     }
   };
-
-  const importCourses = (newCourses: Course[]) => {
-  courses.value = newCourses;
-  saveCourses();
-};
 
   const deleteCourse = (id: number) => {
     courses.value = courses.value.filter(c => c.id !== id);
     saveCourses();
+    cancelMatkulNotification(id); // FIX: Batalkan notifikasi jika matkul dihapus
+  };
+
+  const importCourses = (newCourses: Course[]) => {
+    courses.value = newCourses;
+    saveCourses();
+    newCourses.forEach(c => scheduleMatkulNotification(c));
   };
 
   onMounted(loadCourses);
 
- return { courses, addCourse, updateCourse, deleteCourse, importCourses };
+  return { courses, addCourse, updateCourse, deleteCourse, importCourses };
 }

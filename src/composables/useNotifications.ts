@@ -5,38 +5,47 @@ export function useNotifications() {
   // Minta izin dan Buat Channel
   const requestPermissions = async () => {
     try {
-      // 1. BUAT CHANNEL DULU (Wajib untuk Android 8+)
+      // 1. Channel Biasa (Untuk Tugas)
       await LocalNotifications.createChannel({
         id: 'tugas_channel',
         name: 'Pengingat Tugas',
         description: 'Notifikasi untuk deadline tugas',
-        importance: 5, // Importance.HIGH agar muncul pop-up di atas layar
+        importance: 5, 
         vibration: true,
+        visibility: 1, 
+       
       });
 
-      // 2. Minta Izin (Hanya muncul popup di Android 13+)
+      // 2. TAMBAHAN: Channel Brutal (Untuk Matkul)
+      await LocalNotifications.createChannel({
+        id: 'channel_matkul_brutal',
+        name: 'Peringatan Kuliah Penting',
+        description: 'Notifikasi yang tembus DND untuk jadwal kuliah',
+        importance: 5, // MAX
+        vibration: true,
+        visibility: 1, 
+       
+      });
+
+      // 3. Minta Izin
       await LocalNotifications.requestPermissions();
     } catch (e) {
       console.log('Browser tidak support notifikasi native', e);
     }
   };
 
-  // Jadwalkan Notifikasi
+  // Jadwalkan Notifikasi Tugas (Tetap seperti milik Anda)
   const scheduleNotification = async (task: { id: number; title: string; dueDate: string }) => {
     if (!task.dueDate) return;
 
-    // FIX 1: Potong ID Date.now() jadi angka yang lebih kecil agar Android tidak crash
     const safeId = Number(task.id.toString().slice(-9));
-
     const date = new Date(task.dueDate);
     date.setDate(date.getDate() - 1); 
     date.setHours(7, 0, 0, 0); 
 
-    // FIX 2: Jika disetel untuk H-1 jam 7 pagi tapi ternyata waktunya SUDAH LEWAT,
-    // kita jadwalkan saja 10 detik dari sekarang agar notif tetap ada dan Anda bisa TESTING.
     if (date.getTime() < Date.now()) {
       console.log("Waktu H-1 sudah lewat, set notifikasi 10 detik dari sekarang untuk testing");
-      date.setTime(Date.now() + 10000); // Set 10 detik kedepan
+      date.setTime(Date.now() + 10000); 
     }
 
     try {
@@ -45,8 +54,8 @@ export function useNotifications() {
           {
             title: "Reminder Tugas",
             body: `Jangan lupa: ${task.title} batas waktunya semakin dekat!`,
-            id: safeId, // Pakai ID yang sudah aman
-            channelId: 'tugas_channel', // FIX 3: Wajib diisi sesuai dengan ID channel di atas
+            id: safeId, 
+            channelId: 'tugas_channel', 
             schedule: { at: date },
           }
         ]
@@ -57,7 +66,7 @@ export function useNotifications() {
     }
   };
 
-  // Hapus notifikasi jika tugas dihapus/selesai
+  // Hapus notifikasi tugas
   const cancelNotification = async (id: number) => {
     try {
       const safeId = Number(id.toString().slice(-9));
