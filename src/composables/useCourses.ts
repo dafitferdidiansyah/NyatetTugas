@@ -9,6 +9,7 @@ export interface Course {
   lecturer: string;
   day: string;
   time: string; // Menambahkan tipe data waktu
+  room: string;
 }
 
 // Global State (Di luar fungsi)

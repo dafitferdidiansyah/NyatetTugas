@@ -18,7 +18,10 @@
             <ion-icon :icon="bookOutline" slot="start" color="primary"></ion-icon>
             <ion-label>
               <h2>{{ course.name }}</h2>
-              <p>{{ course.lecturer }} <span v-if="course.time"> • {{ course.time }}</span></p>
+              <p>{{ course.lecturer }} 
+                <span v-if="course.time"> • {{ course.time }}</span>
+                <span v-if="course.room"> • {{ course.room }}</span>
+              </p>
             </ion-label>
             <ion-badge slot="end" color="medium">{{ course.day }}</ion-badge>
           </ion-item>
@@ -84,7 +87,8 @@ const openModal = (course: Course | null) => {
       name: course.name, 
       lecturer: course.lecturer, 
       day: course.day,
-      time: course.time 
+      time: course.time,
+      room: course.room
     };
   } else {
     editingId.value = null;
